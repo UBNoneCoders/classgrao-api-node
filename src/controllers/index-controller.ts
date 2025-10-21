@@ -1,12 +1,13 @@
-import { Request, Response, NextFunction } from "express"
 import { success } from "@/utils/response"
+import { NextFunction, Request, Response } from "express"
 
-export async function home(req: Request, res: Response, next: NextFunction) {
+export const home = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const response = success("API is running", {
-      name: "Adote Pets API",
+      name: "ClassGrão API",
       version: "1.0.0",
-      description: "API para o sistema de adoção de pets",
+      description:
+        "API para classificação de grãos utilizando processamento de imagem.",
       authors: [
         {
           name: "Guilherme Felipe",
