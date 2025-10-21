@@ -7,3 +7,6 @@ export const PORT = process.env.PORT || 3000
 export const JWT_SECRET: Secret = process.env.JWT_SECRET!
 export const JWT_EXPIRES_IN: SignOptions["expiresIn"] = (process.env
   .JWT_EXPIRES_IN ?? "31d") as SignOptions["expiresIn"]
+export const OPENCV_API_URL = process.env.OPENCV_API_URL!
+export const OPENCV_API_TRIGGER_PASSWORD =
+  process.env.OPENCV_API_TRIGGER_PASSWORD!

@@ -38,7 +38,7 @@ export const login = async (
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(
-          failure("Invalid username or password", ErrorCode.INVALID_CREDENTIALS)
+          failure("Usuário ou senha inválidos", ErrorCode.INVALID_CREDENTIALS)
         )
     }
 
@@ -54,7 +54,7 @@ export const login = async (
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(
-          failure("Invalid username or password", ErrorCode.INVALID_CREDENTIALS)
+          failure("Usuário ou senha inválidos", ErrorCode.INVALID_CREDENTIALS)
         )
     }
 
@@ -64,14 +64,10 @@ export const login = async (
         action: "LOGIN_BLOCKED",
         description: "Tentativa de login com conta desativada",
         ipAddress: req.ip,
-        details: {
-          motivo: "conta_desativada",
-          username: user.username,
-        },
       })
       return res
         .status(HTTP_STATUS.FORBIDDEN)
-        .json(failure("Conta desativada", ErrorCode.ACCOUNT_DISABLED))
+        .json(failure("Sua conta está desativada", ErrorCode.ACCOUNT_DISABLED))
     }
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -86,7 +82,7 @@ export const login = async (
     })
 
     return res.status(HTTP_STATUS.OK).json(
-      success("User logged in successfully", {
+      success("Usuário logado com sucesso", {
         user: user,
         token,
       })
@@ -98,8 +94,9 @@ export const login = async (
 
 export const me = (req: Request, res: Response) => {
   const user = req.user
-  res.json({
-    status: "success",
-    user,
-  })
+  return res.status(HTTP_STATUS.OK).json(
+    success("Dados do usuário autenticado pegos com sucesso", {
+      user: user,
+    })
+  )
 }

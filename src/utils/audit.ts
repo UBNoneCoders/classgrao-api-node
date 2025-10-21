@@ -5,7 +5,6 @@ interface AuditLog {
   action: string
   description: string
   ipAddress?: string | null
-  details?: Record<string, unknown>
 }
 
 export const registerAudit = async ({
@@ -13,7 +12,6 @@ export const registerAudit = async ({
   action,
   description,
   ipAddress = null,
-  details = {},
 }: AuditLog): Promise<void> => {
   try {
     await supabase.from("audit_logs").insert({
@@ -21,7 +19,6 @@ export const registerAudit = async ({
       action,
       description,
       ip_address: ipAddress,
-      details,
     })
   } catch (err) {
     console.error("Error:", err)

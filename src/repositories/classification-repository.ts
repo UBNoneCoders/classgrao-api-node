@@ -3,6 +3,45 @@ import { Classification } from "@/types/classification-type"
 import * as crypto from "crypto"
 
 export default class ClassificationRepository {
+  static async findById(id: number) {
+    const { data: classification, error: classificationError } = await supabase
+      .from("classifications")
+      .select("*")
+      .eq("id", id)
+      .single()
+
+    if (classificationError) {
+      return { data: null, error: classificationError }
+    }
+
+    return { data: classification, error: null }
+  }
+
+  static async findByUserId(userId: string) {
+    const { data: classifications, error: classificationError } = await supabase
+      .from("classifications")
+      .select("*")
+      .eq("user_id", userId)
+
+    if (classificationError) {
+      return { data: null, error: classificationError }
+    }
+
+    return { data: classifications, error: null }
+  }
+
+  static async findAll() {
+    const { data: classifications, error: classificationError } = await supabase
+      .from("classifications")
+      .select("*")
+
+    if (classificationError) {
+      return { data: null, error: classificationError }
+    }
+
+    return { data: classifications, error: null }
+  }
+
   static async saveClassification(data: Classification) {
     const { data: classification, error: classificationError } = await supabase
       .from("classifications")
