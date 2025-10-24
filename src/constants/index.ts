@@ -26,6 +26,7 @@ export enum ErrorCode {
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
   FORBIDDEN = "FORBIDDEN",
   NOT_FOUND = "NOT_FOUND",
+  CONFLICT = "CONFLICT",
 }
 
 export enum Roles {
