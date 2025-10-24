@@ -82,10 +82,10 @@ export default class UserRepository {
     return { data: user, error: null }
   }
 
-  static async deleteUser(id: string) {
+  static async toggleUserStatus(id: string, currentStatus: boolean) {
     const { data: user, error: userError } = await supabase
       .from("users")
-      .delete()
+      .update({ active: !currentStatus })
       .eq("id", id)
       .select("id, username, active, name, role")
       .single()
@@ -97,10 +97,10 @@ export default class UserRepository {
     return { data: user, error: null }
   }
 
-  static async toggleUserStatus(id: string, currentStatus: boolean) {
+  static async deleteUser(id: string) {
     const { data: user, error: userError } = await supabase
       .from("users")
-      .update({ active: !currentStatus })
+      .delete()
       .eq("id", id)
       .select("id, username, active, name, role")
       .single()

@@ -342,3 +342,45 @@ export const downloadClassificationReport = async (
     next(err)
   }
 }
+
+export const deleteClassification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const classificationId = Number(req.params.id)
+
+    const { data: classification, error: classificationError } =
+      await ClassificationRepository.findById(classificationId)
+
+    if (classificationError || !classification) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(failure("Classificação não encontrada", ErrorCode.NOT_FOUND))
+    }
+
+    const { data: deletedClassification, error: deleteError } =
+      await ClassificationRepository.deleteClassification(classificationId)
+
+    if (deleteError) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(
+          failure(
+            "Erro ao deletar classificação",
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            [deleteError]
+          )
+        )
+    }
+
+    return res.status(200).json(
+      success("Classificação deletada com sucesso", {
+        classification,
+      })
+    )
+  } catch (err) {
+    next(err)
+  }
+}
