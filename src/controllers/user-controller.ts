@@ -204,7 +204,6 @@ export const updateUser = async (
         .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
     }
 
-    // Usuário pode atualizar seus próprios dados ou admin pode atualizar qualquer usuário
     if (userId !== targetUserId && req.user?.role !== Roles.ADMIN) {
       return res
         .status(HTTP_STATUS.FORBIDDEN)
@@ -352,6 +351,73 @@ export const deleteUser = async (
     })
 
     return res.status(HTTP_STATUS.NO_CONTENT).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const toggleUserStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id
+    const targetUserId = req.params.id
+
+    if (!userId) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+    }
+
+    if (req.user?.role !== Roles.ADMIN) {
+      return res
+        .status(HTTP_STATUS.FORBIDDEN)
+        .json(
+          failure(
+            "Apenas administradores podem alterar status de usuários",
+            ErrorCode.FORBIDDEN
+          )
+        )
+    }
+
+    const { data: user } = await UserRepository.findById(targetUserId)
+
+    if (!user) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(failure("Usuário não encontrado", ErrorCode.NOT_FOUND))
+    }
+
+    const { data: updatedUser, error: toggleError } =
+      await UserRepository.toggleUserStatus(targetUserId, user.active)
+
+    if (toggleError) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(
+          failure(
+            "Erro ao alterar status do usuário",
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            [toggleError]
+          )
+        )
+    }
+
+    const action = updatedUser?.active ? "USER_ACTIVATE" : "USER_DEACTIVATE"
+    const statusText = updatedUser?.active ? "ativado" : "desativado"
+
+    await registerAudit({
+      userId: userId,
+      action: action,
+      description: `Usuário ${user.username} ${statusText}`,
+      ipAddress: req.ip,
+    })
+
+    return res
+      .status(HTTP_STATUS.OK)
+      .json(success(`Usuário ${statusText} com sucesso`, updatedUser))
   } catch (err) {
     next(err)
   }

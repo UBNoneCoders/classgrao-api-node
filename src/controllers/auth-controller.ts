@@ -100,3 +100,24 @@ export const me = (req: Request, res: Response) => {
     })
   )
 }
+
+export const logout = async (req: Request, res: Response) => {
+  const user = req.user
+
+  if (!user) {
+    return res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+  }
+
+  await registerAudit({
+    userId: user.id,
+    action: "LOGOUT",
+    description: "Realizou logout com sucesso",
+    ipAddress: req.ip,
+  })
+
+  return res
+    .status(HTTP_STATUS.OK)
+    .json(success("Usuário deslogado com sucesso"))
+}

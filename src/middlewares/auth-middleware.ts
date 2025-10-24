@@ -20,7 +20,7 @@ const authMiddleware = async (
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as any
-    const { data: user, error } = await UserRepository.findyById(payload.id)
+    const { data: user, error } = await UserRepository.findById(payload.id)
 
     if (!user || error) {
       return next(

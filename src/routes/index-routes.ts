@@ -1,6 +1,6 @@
 import { home } from "@/controllers/index-controller"
 import { Router } from "express"
-import auditLogsRoutes from "./audit-logs"
+import auditLogsRoutes from "./audit-routes"
 import authRouter from "./auth-routes"
 import classificationRoutes from "./classification-routes"
 import userRoutes from "./user-routes"
@@ -13,7 +13,7 @@ rootRouter.use("/auth", authRouter)
 
 rootRouter.use("/classifications", classificationRoutes)
 
-rootRouter.use("/audit-logs", auditLogsRoutes)
+rootRouter.use("/audits", auditLogsRoutes)
 
 rootRouter.use("/users", userRoutes)
 

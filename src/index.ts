@@ -13,4 +13,11 @@ app.listen(PORT, () => {
   console.log(`O servidor está rodando na porta ${PORT}`)
 })
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message:
+      "API ClassGrão funcionando! Acesse /api para as rotas ou /docs para a documentação.",
+  })
+})
+
 app.use(errorMiddleware)
