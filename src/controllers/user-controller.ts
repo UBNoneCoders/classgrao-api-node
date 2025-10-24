@@ -159,9 +159,8 @@ export const getUserById = async (
         .json(failure("Acesso negado ao usuário", ErrorCode.FORBIDDEN))
     }
 
-    const { data: user, error: userError } = await UserRepository.findById(
-      targetUserId
-    )
+    const { data: user, error: userError } =
+      await UserRepository.findById(targetUserId)
 
     if (userError) {
       return res
