@@ -17,10 +17,9 @@ export const login = async (
     const parsed = authSchema.login.safeParse(req.body)
 
     if (!parsed.success) {
-      return res.status(400).json({
-        status: "error",
-        message: parsed.error.issues[0].message,
-      })
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(
+        failure("Dados de login inválidos", ErrorCode.INVALID_REQUEST_DATA)
+      )
     }
 
     const { username, password } = parsed.data

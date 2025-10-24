@@ -27,6 +27,7 @@ export enum ErrorCode {
   FORBIDDEN = "FORBIDDEN",
   NOT_FOUND = "NOT_FOUND",
   CONFLICT = "CONFLICT",
+  INVALID_REQUEST_DATA = "INVALID_REQUEST_DATA",
 }
 
 export enum Roles {
