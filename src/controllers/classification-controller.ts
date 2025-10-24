@@ -5,6 +5,9 @@ import { triggerOpenCVProcessing } from "@/services/opencv-trigger-service"
 import { registerAudit } from "@/utils/audit"
 import { failure, success } from "@/utils/response"
 import { NextFunction, Request, Response } from "express"
+import fs from "fs"
+import path from "path"
+import PDFDocument from "pdfkit"
 
 export const classifyGrain = async (
   req: Request,
@@ -226,6 +229,115 @@ export const getClassificationById = async (
         classification,
       })
     )
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const downloadClassificationReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const classificationId = Number(req.params.id)
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+    }
+
+    const { data: classification, error: classificationError } =
+      await ClassificationRepository.findById(classificationId)
+
+    if (classificationError || !classification) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(failure("Classificação não encontrada", ErrorCode.NOT_FOUND))
+    }
+
+    if (classification.user_id !== userId && req.user?.role !== Roles.ADMIN) {
+      return res
+        .status(HTTP_STATUS.FORBIDDEN)
+        .json(failure("Acesso negado à classificação", ErrorCode.FORBIDDEN))
+    }
+
+    const pdfPath = path.join(
+      process.cwd(),
+      `temp/classification-${classification.id}.pdf`
+    )
+
+    fs.mkdirSync(path.dirname(pdfPath), { recursive: true })
+
+    const doc = new PDFDocument()
+    const stream = fs.createWriteStream(pdfPath)
+    doc.pipe(stream)
+
+    doc
+      .fontSize(20)
+      .text("Relatório de Classificação de Grãos", { align: "center" })
+      .moveDown(1)
+
+    doc
+      .fontSize(14)
+      .text(`Título: ${classification.title}`)
+      .text(`Descrição: ${classification.description}`)
+      .text(
+        `Data de Criação: ${new Date(classification.created_at).toLocaleString(
+          "pt-BR"
+        )}`
+      )
+      .moveDown(1)
+
+    if (classification.result) {
+      const r = classification.result
+      doc
+        .fontSize(16)
+        .text("Resultados da Análise:", { underline: true })
+        .moveDown(0.5)
+
+      doc
+        .fontSize(12)
+        .text(`Total de Grãos: ${r.total_grains}`)
+        .text(`Total de Impurezas: ${r.total_impurities}`)
+        .text(`% de Impurezas: ${r.impurities_percentage}%`)
+        .text(`Área Média: ${r.average_area}`)
+        .text(`Circularidade Média: ${r.average_circularity}`)
+        .text(`Cor Média (BGR): ${r.average_color_bgr.join(", ")}`)
+        .moveDown(1)
+    }
+
+    // 🔹 Imagem (se existir)
+    if (classification.image_path) {
+      try {
+        const imageFullPath = path.join(
+          process.cwd(),
+          "uploads",
+          classification.image_path
+        )
+
+        if (fs.existsSync(imageFullPath)) {
+          doc.image(imageFullPath, {
+            fit: [400, 300],
+            align: "center",
+            valign: "center",
+          })
+        }
+      } catch (err) {
+        console.error("Erro ao inserir imagem:", err)
+      }
+    }
+
+    doc.end()
+
+    stream.on("finish", () => {
+      res.download(pdfPath, `classificacao-${classification.id}.pdf`, err => {
+        if (err) console.error("Erro ao enviar PDF:", err)
+        fs.unlinkSync(pdfPath)
+      })
+    })
   } catch (err) {
     next(err)
   }

@@ -1,5 +1,6 @@
 import {
   classifyGrain,
+  downloadClassificationReport,
   getClassificationById,
   getClassifications,
 } from "@/controllers/classification-controller"
@@ -16,5 +17,7 @@ classificationRoutes.post("/", uploadSingleImage, classifyGrain)
 classificationRoutes.get("/", getClassifications)
 
 classificationRoutes.get("/:id", getClassificationById)
+
+classificationRoutes.get("/:id/report", downloadClassificationReport)
 
 export default classificationRoutes
