@@ -17,10 +17,11 @@ export const login = async (
     const parsed = authSchema.login.safeParse(req.body)
 
     if (!parsed.success) {
-      return res.status(400).json({
-        status: "error",
-        message: parsed.error.issues[0].message,
-      })
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          failure("Dados de login inválidos", ErrorCode.INVALID_REQUEST_DATA)
+        )
     }
 
     const { username, password } = parsed.data
@@ -99,4 +100,25 @@ export const me = (req: Request, res: Response) => {
       user: user,
     })
   )
+}
+
+export const logout = async (req: Request, res: Response) => {
+  const user = req.user
+
+  if (!user) {
+    return res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+  }
+
+  await registerAudit({
+    userId: user.id,
+    action: "LOGOUT",
+    description: "Realizou logout com sucesso",
+    ipAddress: req.ip,
+  })
+
+  return res
+    .status(HTTP_STATUS.OK)
+    .json(success("Usuário deslogado com sucesso"))
 }

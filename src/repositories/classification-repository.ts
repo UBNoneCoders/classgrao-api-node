@@ -74,4 +74,17 @@ export default class ClassificationRepository {
 
     return { data: uploadData.fullPath, error: null }
   }
+
+  static async deleteClassification(id: number) {
+    const { data, error } = await supabase
+      .from("classifications")
+      .delete()
+      .eq("id", id)
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    return { data, error: null }
+  }
 }
