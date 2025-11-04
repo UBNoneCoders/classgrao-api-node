@@ -1,6 +1,7 @@
-import { Router } from "express"
 import { home } from "@/controllers/index-controller"
-import authRouter from "./auth-routes"
+import { Router } from "express"
+
+import authRouter from "./auth/auth-routes"
 
 const rootRouter: Router = Router()
 

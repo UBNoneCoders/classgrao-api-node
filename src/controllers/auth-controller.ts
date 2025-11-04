@@ -17,10 +17,11 @@ export const login = async (
     const parsed = authSchema.login.safeParse(req.body)
 
     if (!parsed.success) {
-      return res.status(400).json({
-        status: "error",
-        message: parsed.error.issues[0].message,
-      })
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          failure("Dados de login inválidos", ErrorCode.INVALID_REQUEST_DATA)
+        )
     }
 
     const { username, password } = parsed.data
@@ -38,7 +39,7 @@ export const login = async (
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(
-          failure("Invalid username or password", ErrorCode.INVALID_CREDENTIALS)
+          failure("Usuário ou senha inválidos", ErrorCode.INVALID_CREDENTIALS)
         )
     }
 
@@ -54,7 +55,7 @@ export const login = async (
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(
-          failure("Invalid username or password", ErrorCode.INVALID_CREDENTIALS)
+          failure("Usuário ou senha inválidos", ErrorCode.INVALID_CREDENTIALS)
         )
     }
 
@@ -64,14 +65,10 @@ export const login = async (
         action: "LOGIN_BLOCKED",
         description: "Tentativa de login com conta desativada",
         ipAddress: req.ip,
-        details: {
-          motivo: "conta_desativada",
-          username: user.username,
-        },
       })
       return res
         .status(HTTP_STATUS.FORBIDDEN)
-        .json(failure("Conta desativada", ErrorCode.ACCOUNT_DISABLED))
+        .json(failure("Sua conta está desativada", ErrorCode.ACCOUNT_DISABLED))
     }
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -86,7 +83,7 @@ export const login = async (
     })
 
     return res.status(HTTP_STATUS.OK).json(
-      success("User logged in successfully", {
+      success("Usuário logado com sucesso", {
         user: user,
         token,
       })
@@ -98,8 +95,30 @@ export const login = async (
 
 export const me = (req: Request, res: Response) => {
   const user = req.user
-  res.json({
-    status: "success",
-    user,
+  return res.status(HTTP_STATUS.OK).json(
+    success("Dados do usuário autenticado pegos com sucesso", {
+      user: user,
+    })
+  )
+}
+
+export const logout = async (req: Request, res: Response) => {
+  const user = req.user
+
+  if (!user) {
+    return res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+  }
+
+  await registerAudit({
+    userId: user.id,
+    action: "LOGOUT",
+    description: "Realizou logout com sucesso",
+    ipAddress: req.ip,
   })
+
+  return res
+    .status(HTTP_STATUS.OK)
+    .json(success("Usuário deslogado com sucesso"))
 }

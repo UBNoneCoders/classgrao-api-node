@@ -26,6 +26,7 @@
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.1",
     "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.17.2",
     "postgres": "^3.4.7",
     "zod": "^4.1.12"
   },
@@ -34,7 +35,9 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.8.1",
+    "@types/pdfkit": "^0.17.3",
     "eslint": "^9.38.0",
     "globals": "^16.4.0",
     "jiti": "^2.6.1",

@@ -1,0 +1,1088 @@
+{
+  "info": {
+    "_postman_id": "dc47af2e-78af-4366-9972-75907c6e3063",
+    "name": "🌱 ClassGrão API",
+    "description": "Esta coleção representa o **contrato de API** do sistema ClassGrão, definindo os endpoints, estruturas de dados, regras de negócio e comportamentos esperados da API. Serve como especificação técnica para desenvolvimento, integração e testes.\n\nPlataforma completa para análise automatizada de grãos (soja e milho) utilizando processamento de imagem. A API permite que agricultores e técnicos submetam imagens de amostras e recebam relatórios detalhados sobre qualidade, classificação e aptidão para plantio.\n\n### 🔑 Autenticação\n\nTodos os endpoints requerem autenticação via JWT Bearer Token, obtido através do endpoint `/auth/login`.\n\n### 🌐 Base URL\n\n```\n{{base_url}}\n\n ```\n\n**Nota:** A API ainda está em desenvolvimento. A URL base será definida quando o ambiente de produção estiver disponível. Por enquanto, configure a variável `base_url` no Postman com o endereço do seu ambiente local ou de testes.\n\nExemplos:\n\n- Desenvolvimento local: `http://localhost:3000/api/v1`\n    \n- Ambiente de testes: `https://api.classgrao.com/v1`\n    \n\n### 📝 Variáveis da Coleção\n\n- `base_url`: URL base da API\n    \n- `token`: Token JWT obtido no login (configurado automaticamente)\n    \n\n### 👥 Perfis de Acesso\n\n- **ADMINISTRADOR**: Acesso completo (gerenciamento de usuários, auditoria, todas as análises)\n    \n- **AGRICULTOR**: Acesso operacional (próprias análises e relatórios)\n    \n\n### 🔬 Processamento de Imagem\n\nO processamento e análise das imagens de grãos é realizado por uma **API externa**.\n\nQuando uma classificação é enviada para a API externa, ela não é processada de forma imediata. Em vez disso, a solicitação entra em um fluxo de análise que pode levar algum tempo, dependendo das regras de negócio e dos critérios de avaliação definidos por essa API. Durante esse período, a classificação permanece em estado de **'em análise'**.\n\nApós a conclusão desse processamento, a API externa não exige que o sistema consulte periodicamente o status. Em vez disso, ela mesma se encarrega de notificar a API original, retornando os resultados da análise automaticamente.\n\nDessa forma, o ciclo se completa:\n\n1. Envio da classificação para a API externa\n    \n2. Processamento pela API externa (estado: 'em análise')\n    \n3. Envio automático do resultado de volta para a ClassGrão API\n    \n\n**Nota:** A integração com a API de processamento de imagem será implementada durante o desenvolvimento.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37202821"
+  },
+  "item": [
+    {
+      "name": "🔐 Autenticação e Controle de Acesso",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Obter a resposta da API como objeto JSON",
+                  "let response = pm.response.json();",
+                  "",
+                  "// Configurar o token na variável de coleção",
+                  "pm.collectionVariables.set(\"token\", response.data.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"usuario\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Autentica usuário e retorna token JWT"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"usuario\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "382"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"17e-lMjN7sQofhNmIZfUNhIODeis9Ms\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:24:07 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário logado com sucesso\",\n    \"data\": {\n        \"user\": {\n            \"id\": 1,\n            \"username\": \"usuario\",\n            \"password_hash\": \"$2b$12$z6nBbs/JlFSha7kcI7Q8xOEzZg5ZP/zCuJxeNf/zhTHWrTxgAqIqq\",\n            \"active\": true,\n            \"name\": \"Usuário Teste\",\n            \"role\": \"FARMER\"\n        },\n        \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYxMzA4NjQ3LCJleHAiOjE3NjM5ODcwNDd9.qxymuwRZQ1RJ5VSxC_qD3qOP0bLvLX0hNBDdUpXhQkA\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.collectionVariables.set(\"token\", \"\");"],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalida o token atual"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/logout",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "58"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"3a-i02ltjneqsLrbIb8idSwpR5idcY\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:36:31 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário deslogado com sucesso\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoints para autenticação de usuários no sistema. Realize login para obter o token necessário para acessar os demais recursos da API, e logout para invalidar tokens ativos."
+    },
+    {
+      "name": "👥 Gerenciamento de Usuários",
+      "item": [
+        {
+          "name": "Cadastrar Usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria Santos\",\n  \"username\": \"maria.santos\",\n  \"password\": \"Senha@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Administrador cadastra novo usuário (RF03) - Requer perfil ADMINISTRADOR"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Maria Santos\",\n  \"username\": \"maria.santos\",\n  \"password\": \"Senha@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["users"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "158"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"9e-zbrFMhShgMhdfrs+X/xWCW8YULE\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:42:03 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário criado com sucesso\",\n    \"data\": {\n        \"user\": {\n            \"id\": 3,\n            \"username\": \"maria.santos\",\n            \"active\": true,\n            \"name\": \"Maria Santos\",\n            \"role\": \"FARMER\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar Usuário",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria Santos Silva 2\",\n  \"username\": \"maria.silva@email.com\",\n  \"password\": \"Senha@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            },
+            "description": "Administrador edita informações de usuário (RF04)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Maria Santos Silva 2\",\n  \"username\": \"maria.silva@email.com\",\n  \"password\": \"Senha@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/users/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "178"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"b2-YH4oFtEMeWsReH5EdtHAj8W2wlM\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:43:59 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário atualizado com sucesso\",\n    \"data\": {\n        \"user\": {\n            \"id\": 1,\n            \"username\": \"maria.silva@email.com\",\n            \"active\": true,\n            \"name\": \"Maria Santos Silva 2\",\n            \"role\": \"ADMIN\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Buscar Usuário por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            },
+            "description": "Obtém detalhes de um usuário específico"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "175"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"af-uO9Gl6srManEarhNOxYuIsKvsJI\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:44:51 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário buscado com sucesso\",\n    \"data\": {\n        \"user\": {\n            \"id\": 1,\n            \"username\": \"maria.silva@email.com\",\n            \"active\": true,\n            \"name\": \"Maria Santos Silva 2\",\n            \"role\": \"ADMIN\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar Usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Lista todos os usuários com filtros opcionais"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["users"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "350"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"15e-hoMkSVX7KmDHDLKlzkD+Qo5fhms\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:45:57 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuários buscados com sucesso\",\n    \"data\": {\n        \"users\": [\n            {\n                \"id\": 3,\n                \"username\": \"maria.santos\",\n                \"active\": true,\n                \"name\": \"Maria Santos\",\n                \"role\": \"FARMER\"\n            },\n            {\n                \"id\": 1,\n                \"username\": \"maria.silva@email.com\",\n                \"active\": true,\n                \"name\": \"Maria Santos Silva 2\",\n                \"role\": \"ADMIN\"\n            },\n            {\n                \"id\": 2,\n                \"username\": \"usuario\",\n                \"active\": true,\n                \"name\": \"Usuário Teste\",\n                \"role\": \"ADMIN\"\n            }\n        ]\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ativar/Desativar Usuário",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1/toggle-status",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1", "toggle-status"]
+            },
+            "description": "Administrador ativa ou desativa conta (RF05)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"active\": false\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/users/1/toggle-status",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "1", "toggle-status"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "170"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"aa-2P2VkOnl3w472kKrsWLFrc8T1/M\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:50:43 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Usuário desativado com sucesso\",\n    \"data\": {\n        \"id\": 1,\n        \"username\": \"maria.silva@email.com\",\n        \"active\": false,\n        \"name\": \"Maria Santos Silva 2\",\n        \"role\": \"ADMIN\"\n    }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Administração completa de usuários da plataforma. Permite cadastrar novos usuários, editar informações, listar com filtros, buscar por ID e ativar/desativar contas. **Acesso restrito a administradores**."
+    },
+    {
+      "name": "🌾 Classificação de Grãos",
+      "item": [
+        {
+          "name": "Submeter Análise de Grão",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Análise Soja Safra 2025",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Amostra do lote A1",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/classifications",
+              "host": ["{{base_url}}"],
+              "path": ["classifications"]
+            },
+            "description": "Envia imagem para análise de grãos (RF06, RF07)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "titulo",
+                      "value": "Análise Soja Safra 2025",
+                      "type": "text"
+                    },
+                    {
+                      "key": "descricao",
+                      "value": "Amostra do lote A1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "tipoGrao",
+                      "value": "soja",
+                      "type": "text"
+                    },
+                    {
+                      "key": "imagem",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/analises",
+                  "host": ["{{base_url}}"],
+                  "path": ["analises"]
+                }
+              },
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Análise enviada com sucesso. Processamento iniciado.\",\n  \"data\": {\n    \"id\": 125,\n    \"titulo\": \"Análise Soja Safra 2025\",\n    \"descricao\": \"Amostra do lote A1\",\n    \"tipoGrao\": \"SOJA\",\n    \"dataEnvio\": \"2025-10-04T14:32:18Z\",\n    \"statusAnalise\": \"PROCESSANDO\",\n    \"usuario\": {\n      \"id\": 1,\n      \"nome\": \"João Silva\"\n    },\n    \"imagemUrl\": \"https://api.classgrao.com/v1/uploads/analises/125/original.jpg\"\n  }\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Listar Análises",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/classifications",
+              "host": ["{{base_url}}"],
+              "path": ["classifications"]
+            },
+            "description": "Lista análises com filtros (RF09)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/classifications",
+                  "host": ["{{base_url}}"],
+                  "path": ["classifications"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "821"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"335-7QyaBWSVbWK6Vk2dXNw7oGRJU4Y\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:52:10 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Classificações buscadas com sucesso\",\n    \"data\": {\n        \"classifications\": [\n            {\n                \"id\": 7,\n                \"title\": \"Ola\",\n                \"description\": \"aaaaa\",\n                \"created_at\": \"2025-10-21T20:44:43.219947+00:00\",\n                \"user_id\": 1,\n                \"image_path\": \"classification-images/5cfc6d9243ed57e0.jpeg\",\n                \"has_classificated\": true,\n                \"result\": {\n                    \"total_grains\": 14,\n                    \"total_impurities\": 5,\n                    \"impurities_percentage\": 35.71,\n                    \"average_area\": 4760.18,\n                    \"average_circularity\": 0.656,\n                    \"average_color_bgr\": [\n                        170.01,\n                        123.2,\n                        89.86\n                    ]\n                }\n            },\n            {\n                \"id\": 11,\n                \"title\": \"aaa\",\n                \"description\": \"aaaaaa\",\n                \"created_at\": \"2025-10-21T23:39:13.050301+00:00\",\n                \"user_id\": 2,\n                \"image_path\": \"classification-images/710163d95139545b.png\",\n                \"has_classificated\": true,\n                \"result\": {\n                    \"total_grains\": 228,\n                    \"total_impurities\": 221,\n                    \"impurities_percentage\": 96.93,\n                    \"average_area\": 186.88,\n                    \"average_circularity\": 0.727,\n                    \"average_color_bgr\": [\n                        231.56,\n                        231.16,\n                        235.94\n                    ]\n                }\n            }\n        ]\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obter Resultado da Análise",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/classifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["classifications", "1"]
+            },
+            "description": "Retorna resultado detalhado da análise (RF08)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/classifications/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["classifications", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "450"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1c2-CTUjuOveYz0oaiiLp2bky4uat0w\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:56:03 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Classificação buscada com sucesso\",\n    \"data\": {\n        \"classification\": {\n            \"id\": 1,\n            \"title\": \"Ola\",\n            \"description\": \"aaaaa\",\n            \"created_at\": \"2025-10-21T20:44:43.219947+00:00\",\n            \"user_id\": 1,\n            \"image_path\": \"classification-images/5cfc6d9243ed57e0.jpeg\",\n            \"has_classificated\": true,\n            \"result\": {\n                \"total_grains\": 14,\n                \"total_impurities\": 5,\n                \"impurities_percentage\": 35.71,\n                \"average_area\": 4760.18,\n                \"average_circularity\": 0.656,\n                \"average_color_bgr\": [\n                    170.01,\n                    123.2,\n                    89.86\n                ]\n            }\n        }\n    }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Módulo principal do sistema para análise inteligente de grãos. Submeta imagens de amostras de soja ou milho e obtenha relatórios detalhados com classificação, métricas de qualidade e aptidão para plantio. Consulte histórico de análises com diversos filtros disponíveis."
+    },
+    {
+      "name": "📊 Relatórios",
+      "item": [
+        {
+          "name": "Download Relatório PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/classifications/7/report",
+              "host": ["{{base_url}}"],
+              "path": ["classifications", "7", "report"]
+            },
+            "description": "Faz download do relatório gerado"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/relatorios/:id/download",
+                  "host": ["{{base_url}}"],
+                  "path": ["relatorios", ":id", "download"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Relatório PDF gerado com sucesso.\",\n  \"data\": {\n    \"id\": 45,\n    \"analiseId\": 101,\n    \"titulo\": \"Relatório de Análise - Safra de Soja 2025\",\n    \"geradoEm\": \"2025-10-04T15:30:41Z\",\n    \"formato\": \"PDF\",\n    \"arquivoUrl\": \"https://api.classgrao.com/v1/relatorios/45/download\",\n    \"tamanhoArquivo\": \"1.2 MB\"\n  }\n}\n"
+            }
+          ]
+        }
+      ],
+      "description": "Geração e download de relatórios em PDF das análises realizadas. Os relatórios incluem dados completos da análise, imagens processadas, gráficos e recomendações técnicas."
+    },
+    {
+      "name": "🔍 Auditoria e Segurança",
+      "item": [
+        {
+          "name": "Listar Logs de Auditoria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/audits",
+              "host": ["{{base_url}}"],
+              "path": ["audits"]
+            },
+            "description": "Administrador consulta logs de auditoria (RF12)"
+          },
+          "response": [
+            {
+              "name": "Resposta de Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "{{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/audits",
+                  "host": ["{{base_url}}"],
+                  "path": ["audits"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "3462"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"d86-hQOl1ieT5mdrMlwkiuS3EDYxmMY\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 24 Oct 2025 12:58:03 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": true,\n    \"message\": \"Logs de auditoria buscados com sucesso\",\n    \"data\": {\n        \"auditLogs\": [\n            {\n                \"id\": 17,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_FAILED\",\n                \"description\": \"Tentativa de login com senha incorreta\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T12:58:40.960821\"\n            },\n            {\n                \"id\": 18,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T12:58:48.231606\"\n            },\n            {\n                \"id\": 19,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T19:42:18.179737\"\n            },\n            {\n                \"id\": 20,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T19:47:33.810124\"\n            },\n            {\n                \"id\": 21,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T19:47:38.245664\"\n            },\n            {\n                \"id\": 22,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T23:30:53.978841\"\n            },\n            {\n                \"id\": 23,\n                \"user_id\": 1,\n                \"action\": \"CLASSIFICATION_SUCCESS\",\n                \"description\": \"Classificação realizada com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::ffff:127.0.0.1\",\n                \"created_at\": \"2025-10-21T23:37:18.465481\"\n            },\n            {\n                \"id\": 24,\n                \"user_id\": 1,\n                \"action\": \"CLASSIFICATION_SUCCESS\",\n                \"description\": \"Classificação realizada com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::ffff:127.0.0.1\",\n                \"created_at\": \"2025-10-21T23:39:16.324311\"\n            },\n            {\n                \"id\": 25,\n                \"user_id\": 2,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-21T23:41:13.483592\"\n            },\n            {\n                \"id\": 26,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:24:07.850337\"\n            },\n            {\n                \"id\": 27,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:26:55.577262\"\n            },\n            {\n                \"id\": 28,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:27:41.290523\"\n            },\n            {\n                \"id\": 29,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:27:50.008156\"\n            },\n            {\n                \"id\": 30,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:35:09.683761\"\n            },\n            {\n                \"id\": 31,\n                \"user_id\": 1,\n                \"action\": \"LOGOUT\",\n                \"description\": \"Realizou logout com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:36:30.916755\"\n            },\n            {\n                \"id\": 32,\n                \"user_id\": 2,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:37:50.290548\"\n            },\n            {\n                \"id\": 33,\n                \"user_id\": 2,\n                \"action\": \"USER_CREATE\",\n                \"description\": \"Usuário maria.santos criado com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:42:03.080167\"\n            },\n            {\n                \"id\": 34,\n                \"user_id\": 1,\n                \"action\": \"LOGIN_SUCCESS\",\n                \"description\": \"Realizou login com sucesso\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:43:11.362706\"\n            },\n            {\n                \"id\": 35,\n                \"user_id\": 1,\n                \"action\": \"USER_UPDATE\",\n                \"description\": \"Usuário 1 atualizado\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:43:59.766491\"\n            },\n            {\n                \"id\": 36,\n                \"user_id\": 1,\n                \"action\": \"USER_DEACTIVATE\",\n                \"description\": \"Usuário maria.silva@email.com desativado\",\n                \"details\": {},\n                \"ip_address\": \"::1\",\n                \"created_at\": \"2025-10-24T12:50:43.638269\"\n            }\n        ]\n    }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Rastreamento e monitoramento de ações realizadas no sistema. Consulte logs de auditoria com filtros por usuário, tipo de ação e período. **Acesso restrito a administradores**. Essencial para conformidade e segurança da plataforma."
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
