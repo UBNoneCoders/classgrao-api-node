@@ -12,7 +12,7 @@ export const fileSchema = z.object({
       message:
         "Tipo de arquivo inválido. Deve ser image/jpeg, image/jpg ou image/png",
     }),
-  size: z.number().max(50 * 1024 * 1024, "O tamanho máximo é 50mb"),
+  size: z.number().max(40 * 1024 * 1024, "O tamanho máximo é 40mb"),
 })
 
 export type ClassifySchema = z.infer<typeof classifySchema>
