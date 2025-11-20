@@ -22,6 +22,7 @@ export default class ClassificationRepository {
       .from("classifications")
       .select("*")
       .eq("user_id", userId)
+      .order("created_at", { ascending: false })
 
     if (classificationError) {
       return { data: null, error: classificationError }
@@ -34,6 +35,7 @@ export default class ClassificationRepository {
     const { data: classifications, error: classificationError } = await supabase
       .from("classifications")
       .select("*")
+      .order("created_at", { ascending: false })
 
     if (classificationError) {
       return { data: null, error: classificationError }
