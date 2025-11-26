@@ -40,8 +40,8 @@ app.get("/docs", (req, res) => {
   })
 })
 
-app.listen(PORT, () => {
-  console.log(`O servidor está rodando na porta ${PORT}`)
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`)
 })
 
 app.use(errorMiddleware)

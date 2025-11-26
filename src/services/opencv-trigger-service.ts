@@ -5,7 +5,7 @@ export const triggerOpenCVProcessing = async (): Promise<{
   status?: number
 }> => {
   try {
-    const response = await fetch(`${OPENCV_API_URL}/classify/trigger`, {
+    const response = await fetch(`${OPENCV_API_URL}/analysis/trigger`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
