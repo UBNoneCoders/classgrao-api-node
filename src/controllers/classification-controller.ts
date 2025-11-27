@@ -1,46 +1,13 @@
 import { ErrorCode, HTTP_STATUS, Roles } from "@/constants"
 import ClassificationRepository from "@/repositories/classification-repository"
 import { classifySchema, fileSchema } from "@/schemas/classify-schema"
+import { ClassificationPDFService } from "@/services/classification-download-pdf"
 import { triggerOpenCVProcessing } from "@/services/opencv-trigger-service"
 import { registerAudit } from "@/utils/audit"
 import { failure, success } from "@/utils/response"
 import { NextFunction, Request, Response } from "express"
 import fs from "fs"
-import http from "http"
-import https from "https"
 import path from "path"
-import PDFDocument from "pdfkit"
-
-const downloadImage = (url: string, destPath: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith("https") ? https : http
-    const file = fs.createWriteStream(destPath)
-
-    protocol
-      .get(url, response => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`Failed to download image: ${response.statusCode}`))
-          return
-        }
-
-        response.pipe(file)
-
-        file.on("finish", () => {
-          file.close()
-          resolve()
-        })
-      })
-      .on("error", err => {
-        fs.unlink(destPath, () => {})
-        reject(err)
-      })
-
-    file.on("error", err => {
-      fs.unlink(destPath, () => {})
-      reject(err)
-    })
-  })
-}
 
 export const classifyGrain = async (
   req: Request,
@@ -389,79 +356,15 @@ export const downloadClassificationReport = async (
 
     fs.mkdirSync(path.dirname(pdfPath), { recursive: true })
 
-    const doc = new PDFDocument()
-    const stream = fs.createWriteStream(pdfPath)
-    doc.pipe(stream)
+    const pdfService = new ClassificationPDFService()
+    await pdfService.generatePDF(classification, pdfPath)
 
-    doc
-      .fontSize(20)
-      .text("Relatório de Classificação de Grãos", { align: "center" })
-      .moveDown(1)
+    res.download(pdfPath, `classificacao-${classification.id}.pdf`, err => {
+      if (err) console.error("Erro ao enviar PDF:", err)
 
-    doc
-      .fontSize(14)
-      .text(`Título: ${classification.title}`)
-      .text(`Descrição: ${classification.description}`)
-      .text(
-        `Data de Criação: ${new Date(classification.created_at).toLocaleString(
-          "pt-BR"
-        )}`
-      )
-      .moveDown(1)
-
-    if (classification.result) {
-      const r = classification.result
-      doc
-        .fontSize(16)
-        .text("Resultados da Análise:", { underline: true })
-        .moveDown(0.5)
-
-      doc
-        .fontSize(12)
-        .text(`Total de Grãos: ${r.total_grains}`)
-        .text(`Grãos Bons: ${r.good_grains}`)
-        .text(`Grãos Defeituosos: ${r.bad_grains}`)
-        .text(`% de Grãos Bons: ${r.good_grains_percentage}%`)
-        .text(`Área Média: ${r.average_area}`)
-        .text(`Circularidade Média: ${r.average_circularity}`)
-        .text(`Cor Média (RGB): ${r.average_color.join(", ")}`)
-        .moveDown(1)
-    }
-
-    if (classification.result_image_path) {
-      try {
-        const resultImageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${classification.result_image_path}`
-        const tempResultImagePath = path.join(
-          process.cwd(),
-          `temp/result-${classification.id}.jpg`
-        )
-        
-        await downloadImage(resultImageUrl, tempResultImagePath)
-
-        doc
-          .fontSize(14)
-          .text("Imagem Processada:", { underline: true })
-          .moveDown(0.5)
-
-        doc.image(tempResultImagePath, {
-          fit: [400, 300],
-          align: "center",
-          valign: "center",
-        })
-        
-        fs.unlinkSync(tempResultImagePath)
-      } catch (err) {
-        console.error("Erro ao inserir imagem processada:", err)
-      }
-    }
-
-    doc.end()
-
-    stream.on("finish", () => {
-      res.download(pdfPath, `classificacao-${classification.id}.pdf`, err => {
-        if (err) console.error("Erro ao enviar PDF:", err)
+      if (fs.existsSync(pdfPath)) {
         fs.unlinkSync(pdfPath)
-      })
+      }
     })
   } catch (err) {
     next(err)
