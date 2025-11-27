@@ -77,6 +77,21 @@ export default class ClassificationRepository {
     return { data: uploadData.fullPath, error: null }
   }
 
+  static async updateClassification(id: number, data: Partial<Classification>) {
+    const { data: updatedClassification, error: updateError } = await supabase
+      .from("classifications")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (updateError) {
+      return { data: null, error: updateError }
+    }
+
+    return { data: updatedClassification, error: null }
+  }
+
   static async deleteClassification(id: number) {
     const { data, error } = await supabase
       .from("classifications")

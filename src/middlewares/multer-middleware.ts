@@ -3,7 +3,7 @@ import multer from "multer"
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2mb
+    fileSize: 50 * 1024 * 1024, // 50mb
   },
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/jpg", "image/png"]

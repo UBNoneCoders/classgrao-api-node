@@ -6,8 +6,41 @@ import { registerAudit } from "@/utils/audit"
 import { failure, success } from "@/utils/response"
 import { NextFunction, Request, Response } from "express"
 import fs from "fs"
+import http from "http"
+import https from "https"
 import path from "path"
 import PDFDocument from "pdfkit"
+
+const downloadImage = (url: string, destPath: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith("https") ? https : http
+    const file = fs.createWriteStream(destPath)
+
+    protocol
+      .get(url, response => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download image: ${response.statusCode}`))
+          return
+        }
+
+        response.pipe(file)
+
+        file.on("finish", () => {
+          file.close()
+          resolve()
+        })
+      })
+      .on("error", err => {
+        fs.unlink(destPath, () => {})
+        reject(err)
+      })
+
+    file.on("error", err => {
+      fs.unlink(destPath, () => {})
+      reject(err)
+    })
+  })
+}
 
 export const classifyGrain = async (
   req: Request,
@@ -110,6 +143,91 @@ export const classifyGrain = async (
 
     return res.json(
       success("Classificação realizada com sucesso", {
+        classification,
+      })
+    )
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const reprocessClassification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const classificationId = Number(req.params.id)
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(failure("Usuário não autenticado", ErrorCode.UNAUTHORIZED))
+    }
+
+    const { data: classification, error: classificationError } =
+      await ClassificationRepository.findById(classificationId)
+
+    if (classificationError || !classification) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(failure("Classificação não encontrada", ErrorCode.NOT_FOUND))
+    }
+
+    const { data: updatedClassification, error: updateError } =
+      await ClassificationRepository.updateClassification(classificationId, {
+        has_classificated: false,
+      })
+
+    if (updateError) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(
+          failure(
+            "Erro ao atualizar classificação",
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            [updateError]
+          )
+        )
+    }
+
+    if (classificationError || !classification) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(failure("Classificação não encontrada", ErrorCode.NOT_FOUND))
+    }
+
+    if (classification.user_id !== userId && req.user?.role !== Roles.ADMIN) {
+      return res
+        .status(HTTP_STATUS.FORBIDDEN)
+        .json(failure("Acesso negado à classificação", ErrorCode.FORBIDDEN))
+    }
+
+    const opencvProcessingResult = await triggerOpenCVProcessing()
+
+    if (!opencvProcessingResult.success) {
+      return res
+        .status(
+          opencvProcessingResult.status || HTTP_STATUS.INTERNAL_SERVER_ERROR
+        )
+        .json(
+          failure(
+            "Falha ao acionar reprocessamento de imagem",
+            ErrorCode.INTERNAL_SERVER_ERROR
+          )
+        )
+    }
+
+    await registerAudit({
+      userId: userId,
+      action: "CLASSIFICATION_REPROCESS",
+      description: `Reprocessamento da classificação ID ${classificationId}`,
+      ipAddress: req.ip,
+    })
+
+    return res.json(
+      success("Reprocessamento da classificação acionado com sucesso", {
         classification,
       })
     )
@@ -301,32 +419,39 @@ export const downloadClassificationReport = async (
       doc
         .fontSize(12)
         .text(`Total de Grãos: ${r.total_grains}`)
-        .text(`Total de Impurezas: ${r.total_impurities}`)
-        .text(`% de Impurezas: ${r.impurities_percentage}%`)
+        .text(`Grãos Bons: ${r.good_grains}`)
+        .text(`Grãos Defeituosos: ${r.bad_grains}`)
+        .text(`% de Grãos Bons: ${r.good_grains_percentage}%`)
         .text(`Área Média: ${r.average_area}`)
         .text(`Circularidade Média: ${r.average_circularity}`)
-        .text(`Cor Média (BGR): ${r.average_color_bgr.join(", ")}`)
+        .text(`Cor Média (RGB): ${r.average_color.join(", ")}`)
         .moveDown(1)
     }
 
-    // 🔹 Imagem (se existir)
-    if (classification.image_path) {
+    if (classification.result_image_path) {
       try {
-        const imageFullPath = path.join(
+        const resultImageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${classification.result_image_path}`
+        const tempResultImagePath = path.join(
           process.cwd(),
-          "uploads",
-          classification.image_path
+          `temp/result-${classification.id}.jpg`
         )
+        
+        await downloadImage(resultImageUrl, tempResultImagePath)
 
-        if (fs.existsSync(imageFullPath)) {
-          doc.image(imageFullPath, {
-            fit: [400, 300],
-            align: "center",
-            valign: "center",
-          })
-        }
+        doc
+          .fontSize(14)
+          .text("Imagem Processada:", { underline: true })
+          .moveDown(0.5)
+
+        doc.image(tempResultImagePath, {
+          fit: [400, 300],
+          align: "center",
+          valign: "center",
+        })
+        
+        fs.unlinkSync(tempResultImagePath)
       } catch (err) {
-        console.error("Erro ao inserir imagem:", err)
+        console.error("Erro ao inserir imagem processada:", err)
       }
     }
 
