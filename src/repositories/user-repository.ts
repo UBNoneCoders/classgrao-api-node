@@ -7,6 +7,7 @@ export default class UserRepository {
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select("id, username, active, name, role")
+      .neq("role", Roles.ADMIN)
 
     if (usersError) {
       return { data: null, error: usersError }

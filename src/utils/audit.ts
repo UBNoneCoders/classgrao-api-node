@@ -1,5 +1,4 @@
 import { supabase } from "@/config/supabase"
-import UserRepository from "@/repositories/user-repository"
 
 interface AuditLog {
   userId?: string | null
@@ -16,7 +15,7 @@ export const registerAudit = async ({
 }: AuditLog): Promise<void> => {
   try {
     await supabase.from("audit_logs").insert({
-      user: userId ? UserRepository.findById(userId) : null,
+      user_id: userId ? parseInt(userId) : null,
       action,
       description,
       ip_address: ipAddress,

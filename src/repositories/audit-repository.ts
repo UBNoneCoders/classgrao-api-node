@@ -4,7 +4,7 @@ export default class AuditRepository {
   static async findAll() {
     const { data: audits, error: auditError } = await supabase
       .from("audit_logs")
-      .select("*")
+      .select("*, user:users(*)")
 
     if (auditError) {
       return { data: null, error: auditError }
@@ -16,7 +16,7 @@ export default class AuditRepository {
   static async findByUserId(userId: string) {
     const { data: audits, error: auditError } = await supabase
       .from("audit_logs")
-      .select("*")
+      .select("*, user:users(*)")
       .eq("user_id", userId)
 
     if (auditError) {
